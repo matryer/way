@@ -9,7 +9,7 @@ HTTP router for Go 1.7
 
 ## Install
 
-There's no need to add a dependency to Way, just copy and paste the appropriate files into your project, or [drop](https://github.com/matryer/drop) them in:
+There's no need to add a dependency to Way, just copy `way.go` and `way_test.go` into your project, or [drop](https://github.com/matryer/drop) them in:
 
 ```
 drop github.com/matryer/way
