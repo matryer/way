@@ -67,14 +67,17 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 // Param gets the path parameter from the specified Context.
-// The second argument indiciates whether the value was found or not.
-func Param(ctx context.Context, param string) (string, bool) {
+// Returns an empty string if the parameter was not found.
+func Param(ctx context.Context, param string) string {
 	v := ctx.Value(wayContextKey(param))
 	if v == nil {
-		return "", false
+		return ""
 	}
 	vStr, ok := v.(string)
-	return vStr, ok
+	if !ok {
+		return ""
+	}
+	return vStr
 }
 
 type route struct {

@@ -32,24 +32,16 @@ go get github.com/matryer/way
 func main() {
 	router := NewRouter()
 
-	router.HandleFunc("GET", "/music/:band/:song", handleSong)
+	router.HandleFunc("GET", "/music/:band/:song", handleReadSong)
 	router.HandleFunc("PUT", "/music/:band/:song", handleUpdateSong)
 	router.HandleFunc("DELETE", "/music/:band/:song", handleDeleteSong)
 
 	log.Fatalln(http.ListenAndServe(":8080", router))
 }
 
-func handleSong(w http.ResponseWriter, r *http.Request) {
-	band, ok := Param(r.Context(), "band")
-	if !ok {
-		http.Error(w, "must provide band", http.StatusBadRequest)
-		return
-	}
-	song, ok := Param(r.Context(), "song")
-	if !ok {
-		http.Error(w, "must provide song", http.StatusBadRequest)
-		return
-	}
+func handleReadSong(w http.ResponseWriter, r *http.Request) {
+	band := Param(r.Context(), "band")
+	song := Param(r.Context(), "song")
 	// use 'band' and 'song' parameters...
 }
 ```

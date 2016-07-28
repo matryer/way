@@ -159,10 +159,7 @@ func TestWay(t *testing.T) {
 		if len(test.Params) > 0 {
 			for expK, expV := range test.Params {
 				// check using helper
-				actualValStr, ok := Param(ctx, expK)
-				if !ok {
-					t.Errorf("Param returned false: %s", expK)
-				}
+				actualValStr := Param(ctx, expK)
 				if actualValStr != expV {
 					t.Errorf("Param: context value %s expected \"%s\" but was \"%s\"", expK, expV, actualValStr)
 				}
