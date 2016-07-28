@@ -45,3 +45,7 @@ func handleReadSong(w http.ResponseWriter, r *http.Request) {
 	// use 'band' and 'song' parameters...
 }
 ```
+
+## Why another HTTP router?
+
+I know, I know. But no routers offer the simplicity of path parameters via Context, and HTTP method matching. Which covers 100% of my use cases so far.
