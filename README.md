@@ -15,6 +15,12 @@ There's no need to add a dependency to Way, just copy `way.go` and `way_test.go`
 drop github.com/matryer/way
 ```
 
+If you prefer, it is go gettable:
+
+```
+go get github.com/matryer/way
+```
+
 ## Usage
 
 * Use `NewWayRouter` to make a new `WayRouter`
