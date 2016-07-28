@@ -30,7 +30,7 @@ go get github.com/matryer/way
 
 ```go
 func main() {
-	router := NewRouter()
+	router := way.NewRouter()
 
 	router.HandleFunc("GET", "/music/:band/:song", handleReadSong)
 	router.HandleFunc("PUT", "/music/:band/:song", handleUpdateSong)
@@ -40,8 +40,8 @@ func main() {
 }
 
 func handleReadSong(w http.ResponseWriter, r *http.Request) {
-	band := Param(r.Context(), "band")
-	song := Param(r.Context(), "song")
+	band := way.Param(r.Context(), "band")
+	song := way.Param(r.Context(), "song")
 	// use 'band' and 'song' parameters...
 }
 ```
