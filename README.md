@@ -26,6 +26,16 @@ func main() {
 }
 
 func handleSong(w http.ResponseWriter, r *http.Request) {
-	
+	band, ok := WayParam(r.Context(), "band")
+	if !ok {
+		http.Error(w, "must provide band", http.StatusBadRequest)
+		return
+	}
+	song, ok := WayParam(r.Context(), "song")
+	if !ok {
+		http.Error(w, "must provide song", http.StatusBadRequest)
+		return
+	}
+	// use 'band' and 'song' parameters...
 }
 ```
