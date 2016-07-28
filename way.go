@@ -10,22 +10,22 @@ import (
 // parameters in context.Context.
 type wayContextKey string
 
-// WayRouter routes HTTP requests.
-type WayRouter struct {
+// Router routes HTTP requests.
+type Router struct {
 	routes []*route
 	// NotFound is the http.Handler to call when no routes
 	// match. By default uses http.NotFoundHandler().
 	NotFound http.Handler
 }
 
-// NewWayRouter makes a new WayRouter.
-func NewWayRouter() *WayRouter {
-	return &WayRouter{
+// NewRouter makes a new Router.
+func NewRouter() *Router {
+	return &Router{
 		NotFound: http.NotFoundHandler(),
 	}
 }
 
-func (r *WayRouter) pathSegments(p string) []string {
+func (r *Router) pathSegments(p string) []string {
 	return strings.Split(strings.Trim(p, "/"), "/")
 }
 
@@ -34,7 +34,7 @@ func (r *WayRouter) pathSegments(p string) []string {
 // Pattern can contain path segments such as: /item/:id which is
 // accessible via context.Value("id").
 // If pattern ends with trailing /, it acts as a prefix.
-func (r *WayRouter) Handle(method, pattern string, handler http.Handler) {
+func (r *Router) Handle(method, pattern string, handler http.Handler) {
 	route := &route{
 		method:  strings.ToLower(method),
 		segs:    r.pathSegments(pattern),
@@ -45,13 +45,13 @@ func (r *WayRouter) Handle(method, pattern string, handler http.Handler) {
 }
 
 // HandleFunc is the http.HandlerFunc alternative to http.Handle.
-func (r *WayRouter) HandleFunc(method, pattern string, fn http.HandlerFunc) {
+func (r *Router) HandleFunc(method, pattern string, fn http.HandlerFunc) {
 	r.Handle(method, pattern, fn)
 }
 
 // ServeHTTP routes the incoming http.Request based on method and path
 // extracting path parameters as it goes.
-func (r *WayRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	method := strings.ToLower(req.Method)
 	segs := r.pathSegments(req.URL.Path)
 	for _, route := range r.routes {
@@ -66,9 +66,9 @@ func (r *WayRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	r.NotFound.ServeHTTP(w, req)
 }
 
-// WayParam gets the path parameter from the specified Context.
+// Param gets the path parameter from the specified Context.
 // The second argument indiciates whether the value was found or not.
-func WayParam(ctx context.Context, param string) (string, bool) {
+func Param(ctx context.Context, param string) (string, bool) {
 	v := ctx.Value(wayContextKey(param))
 	if v == nil {
 		return "", false
@@ -84,7 +84,7 @@ type route struct {
 	prefix  bool
 }
 
-func (r *route) match(ctx context.Context, router *WayRouter, segs []string) (context.Context, bool) {
+func (r *route) match(ctx context.Context, router *Router, segs []string) (context.Context, bool) {
 	if len(segs) > len(r.segs) && !r.prefix {
 		return nil, false
 	}

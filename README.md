@@ -23,10 +23,10 @@ go get github.com/matryer/way
 
 ## Usage
 
-* Use `NewWayRouter` to make a new `WayRouter`
+* Use `NewRouter` to make a new `Router`
 * Call `Handle` and `HandleFunc` to add handlers
 * Specify HTTP method and path pattern for each route
-* Use `WayParam` to get the path parameters from the context
+* Use `Param` function to get the path parameters from the context
 
 ```go
 func main() {
@@ -37,12 +37,12 @@ func main() {
 }
 
 func handleSong(w http.ResponseWriter, r *http.Request) {
-	band, ok := WayParam(r.Context(), "band")
+	band, ok := Param(r.Context(), "band")
 	if !ok {
 		http.Error(w, "must provide band", http.StatusBadRequest)
 		return
 	}
-	song, ok := WayParam(r.Context(), "song")
+	song, ok := Param(r.Context(), "song")
 	if !ok {
 		http.Error(w, "must provide song", http.StatusBadRequest)
 		return

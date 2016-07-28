@@ -140,7 +140,7 @@ var tests = []struct {
 
 func TestWay(t *testing.T) {
 	for _, test := range tests {
-		r := NewWayRouter()
+		r := NewRouter()
 		match := false
 		var ctx context.Context
 		r.Handle(test.RouteMethod, test.RoutePattern, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -159,12 +159,12 @@ func TestWay(t *testing.T) {
 		if len(test.Params) > 0 {
 			for expK, expV := range test.Params {
 				// check using helper
-				actualValStr, ok := WayParam(ctx, expK)
+				actualValStr, ok := Param(ctx, expK)
 				if !ok {
-					t.Errorf("WayParam returned false: %s", expK)
+					t.Errorf("Param returned false: %s", expK)
 				}
 				if actualValStr != expV {
-					t.Errorf("WayParam: context value %s expected \"%s\" but was \"%s\"", expK, expV, actualValStr)
+					t.Errorf("Param: context value %s expected \"%s\" but was \"%s\"", expK, expV, actualValStr)
 				}
 			}
 		}
