@@ -3,7 +3,7 @@ HTTP router for Go 1.7
 
 * Deliberately simple
 * Extremely fast
-* Route based on HTTP methods and path only
+* Route based on HTTP methods and path
 * Path parameters via `Context`
 * Trailing `/` matches path prefixes
 
@@ -16,6 +16,11 @@ drop github.com/matryer/way
 ```
 
 ## Usage
+
+* Use `NewWayRouter` to make a new `WayRouter`
+* Call `Handle` and `HandleFunc` to add handlers
+* Specify HTTP method and path pattern for each route
+* Use `WayParam` to get the path parameters from the context
 
 ```go
 func main() {
