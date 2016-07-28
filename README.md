@@ -31,9 +31,12 @@ go get github.com/matryer/way
 ```go
 func main() {
 	router := NewRouter()
+
 	router.HandleFunc("GET", "/music/:band/:song", handleSong)
-	http.Handle("/", router)
-	log.Fatalln(http.ListenAndServe(":8080", nil))
+	router.HandleFunc("PUT", "/music/:band/:song", handleUpdateSong)
+	router.HandleFunc("DELETE", "/music/:band/:song", handleDeleteSong)
+
+	log.Fatalln(http.ListenAndServe(":8080", router))
 }
 
 func handleSong(w http.ResponseWriter, r *http.Request) {
