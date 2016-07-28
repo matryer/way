@@ -4,8 +4,8 @@ HTTP router for Go 1.7
 * Deliberately simple
 * Extremely fast
 * Route based on HTTP methods and path only
-* Path parameters via Context
-* Trailing / matches path prefixes
+* Path parameters via `Context`
+* Trailing `/` matches path prefixes
 
 ## Install
 
