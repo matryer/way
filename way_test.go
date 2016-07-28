@@ -158,16 +158,13 @@ func TestWay(t *testing.T) {
 		}
 		if len(test.Params) > 0 {
 			for expK, expV := range test.Params {
-				actualVal := ctx.Value(expK)
-				if actualVal == nil {
-					t.Errorf("missing context value %s", expK)
-				}
-				actualValStr, ok := actualVal.(string)
+				// check using helper
+				actualValStr, ok := WayParam(ctx, expK)
 				if !ok {
-					t.Errorf("context value must be string: %s but was %T", expK, actualVal)
+					t.Errorf("WayParam returned false: %s", expK)
 				}
 				if actualValStr != expV {
-					t.Errorf("context value %s expected \"%s\" but was \"%s\"", expK, expV, actualVal)
+					t.Errorf("WayParam: context value %s expected \"%s\" but was \"%s\"", expK, expV, actualValStr)
 				}
 			}
 		}

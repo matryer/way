@@ -6,23 +6,22 @@ import (
 	"strings"
 )
 
+// wayContextKey is the context key type for storing
+// parameters in context.Context.
+type wayContextKey string
+
 // WayRouter routes HTTP requests.
 type WayRouter struct {
 	routes []*route
 	// NotFound is the http.Handler to call when no routes
 	// match. By default uses http.NotFoundHandler().
 	NotFound http.Handler
-	// WithValue puts the path parameter into the context.
-	WithValue func(context.Context, string, string) context.Context
 }
 
 // NewWayRouter makes a new WayRouter.
 func NewWayRouter() *WayRouter {
 	return &WayRouter{
 		NotFound: http.NotFoundHandler(),
-		WithValue: func(ctx context.Context, key string, value string) context.Context {
-			return context.WithValue(ctx, key, value)
-		},
 	}
 }
 
@@ -67,6 +66,17 @@ func (r *WayRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	r.NotFound.ServeHTTP(w, req)
 }
 
+// WayParam gets the path parameter from the specified Context.
+// The second argument indiciates whether the value was found or not.
+func WayParam(ctx context.Context, param string) (string, bool) {
+	v := ctx.Value(wayContextKey(param))
+	if v == nil {
+		return "", false
+	}
+	vStr, ok := v.(string)
+	return vStr, ok
+}
+
 type route struct {
 	method  string
 	segs    []string
@@ -93,7 +103,7 @@ func (r *route) match(ctx context.Context, router *WayRouter, segs []string) (co
 			}
 		}
 		if isParam {
-			ctx = router.WithValue(ctx, seg, segs[i])
+			ctx = context.WithValue(ctx, wayContextKey(seg), segs[i])
 		}
 	}
 	return ctx, true

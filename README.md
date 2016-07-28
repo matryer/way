@@ -17,11 +17,15 @@ drop github.com/matryer/way
 
 ## Usage
 
-```
+```go
 func main() {
-	
 	router := NewWayRouter()
-	router.Handle("GET", "")
+	router.HandleFunc("GET", "/music/:band/:song", handleSong)
+	http.Handle("/", router)
+	log.Fatalln(http.ListenAndServe(":8080", nil))
+}
 
+func handleSong(w http.ResponseWriter, r *http.Request) {
+	
 }
 ```
