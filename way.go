@@ -34,6 +34,7 @@ func (r *WayRouter) pathSegments(p string) []string {
 // Method can be any HTTP method string or "*" to match all methods.
 // Pattern can contain path segments such as: /item/:id which is
 // accessible via context.Value("id").
+// If pattern ends with trailing /, it acts as a prefix.
 func (r *WayRouter) Handle(method, pattern string, handler http.Handler) {
 	route := &route{
 		method:  strings.ToLower(method),
@@ -42,6 +43,11 @@ func (r *WayRouter) Handle(method, pattern string, handler http.Handler) {
 		prefix:  strings.HasSuffix(pattern, "/"),
 	}
 	r.routes = append(r.routes, route)
+}
+
+// HandleFunc is the http.HandlerFunc alternative to http.Handle.
+func (r *WayRouter) HandleFunc(method, pattern string, fn http.HandlerFunc) {
+	r.Handle(method, pattern, fn)
 }
 
 // ServeHTTP routes the incoming http.Request based on method and path
