@@ -16,38 +16,6 @@ type WayRouter struct {
 	WithValue func(context.Context, string, string) context.Context
 }
 
-type route struct {
-	method  string
-	segs    []string
-	handler http.Handler
-	prefix  bool
-}
-
-func (r *route) match(ctx context.Context, router *WayRouter, segs []string) (context.Context, bool) {
-	if len(segs) > len(r.segs) && !r.prefix {
-		return nil, false
-	}
-	for i, seg := range r.segs {
-		if i > len(segs)-1 {
-			return nil, false
-		}
-		isParam := false
-		if strings.HasPrefix(seg, ":") {
-			isParam = true
-			seg = strings.TrimPrefix(seg, ":")
-		}
-		if !isParam { // verbatim check
-			if seg != segs[i] {
-				return nil, false
-			}
-		}
-		if isParam {
-			ctx = router.WithValue(ctx, seg, segs[i])
-		}
-	}
-	return ctx, true
-}
-
 // NewWayRouter makes a new WayRouter.
 func NewWayRouter() *WayRouter {
 	return &WayRouter{
@@ -91,4 +59,36 @@ func (r *WayRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 	r.NotFound.ServeHTTP(w, req)
+}
+
+type route struct {
+	method  string
+	segs    []string
+	handler http.Handler
+	prefix  bool
+}
+
+func (r *route) match(ctx context.Context, router *WayRouter, segs []string) (context.Context, bool) {
+	if len(segs) > len(r.segs) && !r.prefix {
+		return nil, false
+	}
+	for i, seg := range r.segs {
+		if i > len(segs)-1 {
+			return nil, false
+		}
+		isParam := false
+		if strings.HasPrefix(seg, ":") {
+			isParam = true
+			seg = strings.TrimPrefix(seg, ":")
+		}
+		if !isParam { // verbatim check
+			if seg != segs[i] {
+				return nil, false
+			}
+		}
+		if isParam {
+			ctx = router.WithValue(ctx, seg, segs[i])
+		}
+	}
+	return ctx, true
 }
