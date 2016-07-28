@@ -8,8 +8,11 @@ import (
 
 // WayRouter routes HTTP requests.
 type WayRouter struct {
-	routes    []*route
-	NotFound  http.Handler
+	routes []*route
+	// NotFound is the http.Handler to call when no routes
+	// match. By default uses http.NotFoundHandler().
+	NotFound http.Handler
+	// WithValue puts the path parameter into the context.
 	WithValue func(context.Context, string, string) context.Context
 }
 
