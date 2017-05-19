@@ -167,3 +167,99 @@ func TestWay(t *testing.T) {
 		}
 	}
 }
+
+//
+// B E N C H M A R K S :
+//
+
+// data needed for benchmarking
+type benchmarkData struct {
+	RouteMethod  string
+	RoutePattern string
+
+	Method string
+	Path   string
+}
+
+// only needed to prevent the compiler from optimizing the code too much
+var benchmarkCounter int
+
+func BenchmarkStaticTwo(b *testing.B) {
+	benchmarkWay(b, benchmarkData{
+		"GET", "/one/two",
+		"GET", "/one/two",
+	})
+}
+func BenchmarkStaticThree(b *testing.B) {
+	benchmarkWay(b, benchmarkData{
+		"GET", "/one/two/three",
+		"GET", "/one/two/three",
+	})
+}
+func BenchmarkStaticFour(b *testing.B) {
+	benchmarkWay(b, benchmarkData{
+		"GET", "/one/two/three/four",
+		"GET", "/one/two/three/four",
+	})
+}
+func BenchmarkParamsTwo(b *testing.B) {
+	benchmarkWay(b, benchmarkData{
+		"GET", "/:one/:two",
+		"GET", "/one/two",
+	})
+}
+func BenchmarkParamsThree(b *testing.B) {
+	benchmarkWay(b, benchmarkData{
+		"GET", "/:one/:two/:three",
+		"GET", "/one/two/three",
+	})
+}
+func BenchmarkParamsFour(b *testing.B) {
+	benchmarkWay(b, benchmarkData{
+		"GET", "/:one/:two/:three/:four",
+		"GET", "/one/two/three/four",
+	})
+}
+func BenchmarkNoMatchStaticThree(b *testing.B) {
+	benchmarkWay(b, benchmarkData{
+		"GET", "/one/two/three/four",
+		"GET", "/one/two/three",
+	})
+}
+func BenchmarkNoMatchParamsThree(b *testing.B) {
+	benchmarkWay(b, benchmarkData{
+		"GET", "/:one/:two/:three/:four",
+		"GET", "/one/two/three",
+	})
+}
+func BenchmarkNoMatchStaticFour(b *testing.B) {
+	benchmarkWay(b, benchmarkData{
+		"GET", "/one/two/three/four",
+		"GET", "/one/two/three",
+	})
+}
+func BenchmarkNoMatchParamsFour(b *testing.B) {
+	benchmarkWay(b, benchmarkData{
+		"GET", "/:one/:two/:three/:four",
+		"GET", "/one/two/three",
+	})
+}
+
+func benchmarkWay(b *testing.B, d benchmarkData) {
+	r := NewRouter()
+	count := 0
+	var ctx context.Context
+	r.Handle(d.RouteMethod, d.RoutePattern, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		count++
+		ctx = r.Context()
+	}))
+	req, err := http.NewRequest(d.Method, d.Path, nil)
+	if err != nil {
+		b.Errorf("NewRequest: %s", err)
+	}
+	w := httptest.NewRecorder()
+	for i := 0; i < b.N; i++ {
+		r.ServeHTTP(w, req)
+	}
+	benchmarkCounter = count
+}
