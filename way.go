@@ -11,7 +11,13 @@ import (
 type wayContextKey string
 
 // Router routes HTTP requests.
-type Router struct {
+type Router interface {
+	Handle(method, pattern string, handler http.Handler)
+	HandleFunc(method, pattern string, fn http.HandlerFunc)
+	ServeHTTP(w http.ResponseWriter, req *http.Request)
+}
+
+type router1 struct {
 	routes []*route
 	// NotFound is the http.Handler to call when no routes
 	// match. By default uses http.NotFoundHandler().
@@ -19,13 +25,13 @@ type Router struct {
 }
 
 // NewRouter makes a new Router.
-func NewRouter() *Router {
-	return &Router{
+func NewRouter() Router {
+	return &router1{
 		NotFound: http.NotFoundHandler(),
 	}
 }
 
-func (r *Router) pathSegments(p string) []string {
+func (r *router1) pathSegments(p string) []string {
 	return strings.Split(strings.Trim(p, "/"), "/")
 }
 
@@ -34,7 +40,7 @@ func (r *Router) pathSegments(p string) []string {
 // Pattern can contain path segments such as: /item/:id which is
 // accessible via context.Value("id").
 // If pattern ends with trailing /, it acts as a prefix.
-func (r *Router) Handle(method, pattern string, handler http.Handler) {
+func (r *router1) Handle(method, pattern string, handler http.Handler) {
 	route := &route{
 		method:  strings.ToLower(method),
 		segs:    r.pathSegments(pattern),
@@ -45,13 +51,13 @@ func (r *Router) Handle(method, pattern string, handler http.Handler) {
 }
 
 // HandleFunc is the http.HandlerFunc alternative to http.Handle.
-func (r *Router) HandleFunc(method, pattern string, fn http.HandlerFunc) {
+func (r *router1) HandleFunc(method, pattern string, fn http.HandlerFunc) {
 	r.Handle(method, pattern, fn)
 }
 
 // ServeHTTP routes the incoming http.Request based on method and path
 // extracting path parameters as it goes.
-func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (r *router1) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	method := strings.ToLower(req.Method)
 	segs := r.pathSegments(req.URL.Path)
 	for _, route := range r.routes {
@@ -87,7 +93,7 @@ type route struct {
 	prefix  bool
 }
 
-func (r *route) match(ctx context.Context, router *Router, segs []string) (context.Context, bool) {
+func (r *route) match(ctx context.Context, router *router1, segs []string) (context.Context, bool) {
 	if len(segs) > len(r.segs) && !r.prefix {
 		return nil, false
 	}
