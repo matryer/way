@@ -32,7 +32,7 @@ func (r *Router) pathSegments(p string) []string {
 // Handle adds a handler with the specified method and pattern.
 // Method can be any HTTP method string or "*" to match all methods.
 // Pattern can contain path segments such as: /item/:id which is
-// accessible via context.Value("id").
+// accessible via the Param function.
 // If pattern ends with trailing /, it acts as a prefix.
 func (r *Router) Handle(method, pattern string, handler http.Handler) {
 	route := &route{
