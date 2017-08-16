@@ -46,6 +46,21 @@ func handleReadSong(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
+* Set `Router.NotFound` to handle 404 errors manually
+
+```go
+func main() {
+	router := way.NewRouter()
+	
+	router.NotFound = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "This is not the page you are looking for")
+	})
+	
+	log.Fatalln(http.ListenAndServe(":8080", router))
+}
+```
+
 ## Why another HTTP router?
 
 I know, I know. But no routers offer the simplicity of path parameters via Context, and HTTP method matching. Which covers 100% of my use cases so far.
