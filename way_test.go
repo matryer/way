@@ -167,3 +167,45 @@ func TestWay(t *testing.T) {
 		}
 	}
 }
+
+func TestMultipleRoutesDifferentMethods(t *testing.T) {
+	r := NewRouter()
+	var match string
+	r.Handle(http.MethodGet, "/route", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		match = "GET /route"
+	}))
+	r.Handle(http.MethodDelete, "/route", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		match = "DELETE /route"
+	}))
+	r.Handle(http.MethodPost, "/route", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		match = "POST /route"
+	}))
+
+	req, err := http.NewRequest(http.MethodGet, "/route", nil)
+	if err != nil {
+		t.Errorf("NewRequest: %s", err)
+	}
+	r.ServeHTTP(httptest.NewRecorder(), req)
+	if match != "GET /route" {
+		t.Errorf("unexpected: %s", match)
+	}
+
+	req, err = http.NewRequest(http.MethodDelete, "/route", nil)
+	if err != nil {
+		t.Errorf("NewRequest: %s", err)
+	}
+	r.ServeHTTP(httptest.NewRecorder(), req)
+	if match != "DELETE /route" {
+		t.Errorf("unexpected: %s", match)
+	}
+
+	req, err = http.NewRequest(http.MethodPost, "/route", nil)
+	if err != nil {
+		t.Errorf("NewRequest: %s", err)
+	}
+	r.ServeHTTP(httptest.NewRecorder(), req)
+	if match != "POST /route" {
+		t.Errorf("unexpected: %s", match)
+	}
+
+}
