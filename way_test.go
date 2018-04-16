@@ -106,6 +106,14 @@ var tests = []struct {
 		"GET", "/not-prefix",
 		"GET", "/not-prefix/anything/else", false, nil,
 	},
+	{
+		"GET", "/prefixdots...",
+		"GET", "/prefixdots/anything/else", true, nil,
+	},
+	{
+		"GET", "/prefixdots...",
+		"GET", "/prefixdots", true, nil,
+	},
 	// path params
 	{
 		"GET", "/path-param/:id",

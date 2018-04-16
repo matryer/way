@@ -39,7 +39,7 @@ func (r *Router) Handle(method, pattern string, handler http.Handler) {
 		method:  strings.ToLower(method),
 		segs:    r.pathSegments(pattern),
 		handler: handler,
-		prefix:  strings.HasSuffix(pattern, "/"),
+		prefix:  strings.HasSuffix(pattern, "/") || strings.HasSuffix(pattern, "..."),
 	}
 	r.routes = append(r.routes, route)
 }
@@ -69,11 +69,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 // Param gets the path parameter from the specified Context.
 // Returns an empty string if the parameter was not found.
 func Param(ctx context.Context, param string) string {
-	v := ctx.Value(wayContextKey(param))
-	if v == nil {
-		return ""
-	}
-	vStr, ok := v.(string)
+	vStr, ok := ctx.Value(wayContextKey(param)).(string)
 	if !ok {
 		return ""
 	}
@@ -101,6 +97,11 @@ func (r *route) match(ctx context.Context, router *Router, segs []string) (conte
 			seg = strings.TrimPrefix(seg, ":")
 		}
 		if !isParam { // verbatim check
+			if strings.HasSuffix(seg, "...") {
+				if strings.HasPrefix(segs[i], seg[:len(seg)-3]) {
+					return ctx, true
+				}
+			}
 			if seg != segs[i] {
 				return nil, false
 			}
