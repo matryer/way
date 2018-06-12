@@ -1,32 +1,33 @@
 # Way
+
 HTTP router for Go 1.7
 
-* Deliberately simple
-* Extremely fast
-* Route based on HTTP methods and path
-* Path parameters via `Context` (e.g. `/music/:band/:song`)
-* Trailing `/` matches path prefixes
+- Deliberately simple
+- Extremely fast
+- Route based on HTTP methods and path
+- Path parameters via `Context` (e.g. `/music/:band/:song`)
+- Trailing `/` matches path prefixes
 
 ## Install
 
 There's no need to add a dependency to Way, just copy `way.go` and `way_test.go` into your project, or [drop](https://github.com/matryer/drop) them in:
 
-```
+```shell
 drop github.com/matryer/way
 ```
 
 If you prefer, it is go gettable:
 
-```
+```shell
 go get github.com/matryer/way
 ```
 
 ## Usage
 
-* Use `NewRouter` to make a new `Router`
-* Call `Handle` and `HandleFunc` to add handlers
-* Specify HTTP method and path pattern for each route
-* Use `Param` function to get the path parameters from the context
+- Use `NewRouter` to make a new `Router`
+- Call `Handle` and `HandleFunc` to add handlers
+- Specify HTTP method and path pattern for each route
+- Use `Param` function to get the path parameters from the context
 
 ```go
 func main() {
@@ -46,7 +47,7 @@ func handleReadSong(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-* Prefix matching
+- Prefix matching
 
 To match any path that has a specific prefix, use the `...` prefix indicator:
 
@@ -61,21 +62,21 @@ func main() {
 
 In the above example, the following paths will match:
 
-* `/images`
-* `/images/`
-* `/images/one/two/three.jpg`
+- `/images`
+- `/images/`
+- `/images/one/two/three.jpg`
 
-* Set `Router.NotFound` to handle 404 errors manually
+- Set `Router.NotFound` to handle 404 errors manually
 
 ```go
 func main() {
 	router := way.NewRouter()
-	
+
 	router.NotFound = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "This is not the page you are looking for")
 	})
-	
+
 	log.Fatalln(http.ListenAndServe(":8080", router))
 }
 ```

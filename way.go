@@ -45,7 +45,7 @@ func (r *Router) Handle(method, pattern string, handler http.Handler) {
 }
 
 // HandleFunc is the http.HandlerFunc alternative to http.Handle.
-func (r *Router) HandleFunc(method, pattern string, fn http.HandlerFunc) {
+func (r *Router) HandleFunc(method, pattern string, fn http.Handler) {
 	r.Handle(method, pattern, fn)
 }
 
