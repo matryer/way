@@ -6,6 +6,18 @@ import (
 	"strings"
 )
 
+const ( // HTTP Methods in this router
+	WAY_GET      int = 0x01 // 1
+	WAY_HEAD     int = 0x02 // 2
+	WAY_POST     int = 0x04 // 4
+	WAY_PUT      int = 0x08 // 8
+	WAY_DELETE   int = 0x10 // 16
+	WAY_OPTIONS  int = 0x20 // 32
+	WAY_CONNECT  int = 0x40 // 64
+	WAY_TRACE    int = 0x80 // 128
+	WAY_WILDCARD int = 0xFF // 255 (SUM OF ALL TYPES)
+)
+
 // wayContextKey is the context key type for storing
 // parameters in context.Context.
 type wayContextKey string
@@ -25,8 +37,30 @@ func NewRouter() *Router {
 	}
 }
 
-func (r *Router) pathSegments(p string) []string {
+func (rtr *Router) pathSegments(p string) []string {
 	return strings.Split(strings.Trim(p, "/"), "/")
+}
+
+func (rtr *Router) methodToI(m string) int {
+	switch m {
+	case "GET":
+		return WAY_GET
+	case "POST":
+		return WAY_POST
+	case "HEAD":
+		return WAY_HEAD
+	case "PUT":
+		return WAY_POST
+	case "DELETE":
+		return WAY_DELETE
+	case "OPTIONS":
+		return WAY_OPTIONS
+	case "CONNECT":
+		return WAY_CONNECT
+	case "TRACE":
+		return WAY_TRACE
+	}
+	return 0
 }
 
 // Handle adds a handler with the specified method and pattern.
@@ -34,38 +68,69 @@ func (r *Router) pathSegments(p string) []string {
 // Pattern can contain path segments such as: /item/:id which is
 // accessible via the Param function.
 // If pattern ends with trailing /, it acts as a prefix.
-func (r *Router) Handle(method, pattern string, handler http.Handler) {
-	segsPath := r.pathSegments(pattern)
+func (rtr *Router) Handle(methods int, pattern string, handler http.Handler) {
+	segsPath := rtr.pathSegments(pattern)
 	route := &route{
-		method:  strings.ToLower(method),
+		methods: methods,
 		segs:    segsPath,
 		segsLen: len(segsPath),
 		handler: handler,
 		prefix:  strings.HasSuffix(pattern, "/") || strings.HasSuffix(pattern, "..."),
 	}
-	r.routes = append(r.routes, route)
+	rtr.routes = append(rtr.routes, route)
 }
 
-// HandleFunc is the http.HandlerFunc alternative to http.Handle.
-func (r *Router) HandleFunc(method, pattern string, fn http.HandlerFunc) {
-	r.Handle(method, pattern, fn)
+// ALL ...
+func (rtr *Router) ALL(pattern string, handler http.Handler) {
+	rtr.Handle(WAY_WILDCARD, pattern, handler)
+}
+
+// GET ...
+func (rtr *Router) GET(pattern string, handler http.Handler) {
+	rtr.Handle(WAY_GET, pattern, handler)
+}
+
+// HEAD ...
+func (rtr *Router) HEAD(pattern string, handler http.Handler) {
+	rtr.Handle(WAY_HEAD, pattern, handler)
+}
+
+// POST ...
+func (rtr *Router) POST(pattern string, handler http.Handler) {
+	rtr.Handle(WAY_POST, pattern, handler)
+}
+
+// PUT ...
+func (rtr *Router) PUT(pattern string, handler http.Handler) {
+	rtr.Handle(WAY_PUT, pattern, handler)
+}
+
+// DELETE ...
+func (rtr *Router) DELETE(pattern string, handler http.Handler) {
+	rtr.Handle(WAY_DELETE, pattern, handler)
 }
 
 // ServeHTTP routes the incoming http.Request based on method and path
 // extracting path parameters as it goes.
-func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	method := strings.ToLower(req.Method)
-	segs := r.pathSegments(req.URL.Path)
-	for _, route := range r.routes {
-		if route.method != method && route.method != "*" {
+func (rtr *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	reqMethod := rtr.methodToI(r.Method)
+	if reqMethod == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("400 bad request\n"))
+		return
+	}
+
+	segs := rtr.pathSegments(r.URL.Path)
+	for _, route := range rtr.routes {
+		if !route.hasMethods(reqMethod) {
 			continue
 		}
-		if ctx, ok := route.match(req.Context(), segs); ok {
-			route.handler.ServeHTTP(w, req.WithContext(ctx))
+		if ctx, ok := route.match(r.Context(), segs); ok {
+			route.handler.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
 	}
-	r.NotFound.ServeHTTP(w, req)
+	rtr.NotFound.ServeHTTP(w, r)
 }
 
 // Param gets the path parameter from the specified Context.
@@ -79,22 +144,26 @@ func Param(ctx context.Context, param string) string {
 }
 
 type route struct {
-	method  string
+	methods int
 	segs    []string
-	segsLen int
+	segsLen int //Risparmia un operazione len() per ogni Request
 	handler http.Handler
 	prefix  bool
 }
 
-func (r *route) match(ctx context.Context, segs []string) (context.Context, bool) {
+func (rt *route) hasMethods(methods int) bool {
+	return methods&rt.methods > 0
+}
+
+func (rt *route) match(ctx context.Context, segs []string) (context.Context, bool) {
 	paramSegsLen := len(segs)
 
-	if paramSegsLen > r.segsLen && !r.prefix {
+	if paramSegsLen > rt.segsLen && !rt.prefix {
 		return nil, false
 	}
 
 	for i := 0; i < paramSegsLen; i++ {
-		routeSeg := r.segs[i]
+		routeSeg := rt.segs[i]
 		paramSeg := segs[i]
 
 		if routeSeg != paramSeg {
@@ -102,7 +171,8 @@ func (r *route) match(ctx context.Context, segs []string) (context.Context, bool
 				routeSeg = strings.TrimPrefix(routeSeg, ":")
 				ctx = context.WithValue(ctx, wayContextKey(routeSeg), paramSeg)
 				continue
-			} else if strings.HasSuffix(routeSeg, "...") {
+			}
+			if strings.HasSuffix(routeSeg, "...") {
 				if strings.HasPrefix(paramSeg, routeSeg[:len(routeSeg)-3]) {
 					return ctx, true
 				}
