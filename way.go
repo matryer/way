@@ -35,9 +35,11 @@ func (r *Router) pathSegments(p string) []string {
 // accessible via the Param function.
 // If pattern ends with trailing /, it acts as a prefix.
 func (r *Router) Handle(method, pattern string, handler http.Handler) {
+	segsPath := r.pathSegments(pattern)
 	route := &route{
 		method:  strings.ToLower(method),
-		segs:    r.pathSegments(pattern),
+		segs:    segsPath,
+		segsLen: len(segsPath),
 		handler: handler,
 		prefix:  strings.HasSuffix(pattern, "/") || strings.HasSuffix(pattern, "..."),
 	}
@@ -58,7 +60,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		if route.method != method && route.method != "*" {
 			continue
 		}
-		if ctx, ok := route.match(req.Context(), r, segs); ok {
+		if ctx, ok := route.match(req.Context(), segs); ok {
 			route.handler.ServeHTTP(w, req.WithContext(ctx))
 			return
 		}
@@ -79,30 +81,32 @@ func Param(ctx context.Context, param string) string {
 type route struct {
 	method  string
 	segs    []string
+	segsLen int
 	handler http.Handler
 	prefix  bool
 }
 
-func (r *route) match(ctx context.Context, router *Router, segs []string) (context.Context, bool) {
+func (r *route) match(ctx context.Context, segs []string) (context.Context, bool) {
 	paramSegsLen := len(segs)
 
-	if paramSegsLen > len(r.segs) && !r.prefix {
+	if paramSegsLen > r.segsLen && !r.prefix {
 		return nil, false
 	}
 
 	for i := 0; i < paramSegsLen; i++ {
-		paramSeg := segs[i]
 		routeSeg := r.segs[i]
+		paramSeg := segs[i]
 
-		if strings.HasPrefix(routeSeg, ":") {
-			routeSeg = strings.TrimPrefix(routeSeg, ":")
-			ctx = context.WithValue(ctx, wayContextKey(routeSeg), paramSeg)
-		} else if strings.HasSuffix(routeSeg, "...") {
-			if strings.HasPrefix(paramSeg, routeSeg[:len(routeSeg)-3]) {
-				return ctx, true
+		if routeSeg != paramSeg {
+			if strings.HasPrefix(routeSeg, ":") {
+				routeSeg = strings.TrimPrefix(routeSeg, ":")
+				ctx = context.WithValue(ctx, wayContextKey(routeSeg), paramSeg)
+				continue
+			} else if strings.HasSuffix(routeSeg, "...") {
+				if strings.HasPrefix(paramSeg, routeSeg[:len(routeSeg)-3]) {
+					return ctx, true
+				}
 			}
-			return nil, false
-		} else if paramSeg != routeSeg {
 			return nil, false
 		}
 	}
