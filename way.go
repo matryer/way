@@ -15,7 +15,7 @@ const ( // HTTP Methods in this router
 	WAY_OPTIONS  int = 0x20 // 32
 	WAY_CONNECT  int = 0x40 // 64
 	WAY_TRACE    int = 0x80 // 128
-	WAY_WILDCARD int = 0xFF // 255 (SUM OF ALL TYPES)
+	WAY_WILDCARD int = 0xFF // 255
 )
 
 // wayContextKey is the context key type for storing
@@ -146,7 +146,7 @@ func Param(ctx context.Context, param string) string {
 type route struct {
 	methods int
 	segs    []string
-	segsLen int //Risparmia un operazione len() per ogni Request
+	segsLen int
 	handler http.Handler
 	prefix  bool
 }
