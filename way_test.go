@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 )
 
@@ -117,11 +118,13 @@ var tests = []struct {
 	// path params
 	{
 		"GET", "/path-param/:id",
-		"GET", "/path-param/123", true, map[string]string{"id": "123"},
+		"GET", "/path-param/123", true,
+		map[string]string{"id": "123"},
 	},
 	{
 		"GET", "/path-params/:era/:group/:member",
-		"GET", "/path-params/60s/beatles/lennon", true, map[string]string{
+		"GET", "/path-params/60s/beatles/lennon", true,
+		map[string]string{
 			"era":    "60s",
 			"group":  "beatles",
 			"member": "lennon",
@@ -129,7 +132,8 @@ var tests = []struct {
 	},
 	{
 		"GET", "/path-params-prefix/:era/:group/:member/",
-		"GET", "/path-params-prefix/60s/beatles/lennon/yoko", true, map[string]string{
+		"GET", "/path-params-prefix/60s/beatles/lennon/yoko", true,
+		map[string]string{
 			"era":    "60s",
 			"group":  "beatles",
 			"member": "lennon",
@@ -147,32 +151,34 @@ var tests = []struct {
 }
 
 func TestWay(t *testing.T) {
-	for _, test := range tests {
-		r := NewRouter()
-		match := false
-		var ctx context.Context
-		r.Handle(test.RouteMethod, test.RoutePattern, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			match = true
-			ctx = r.Context()
-		}))
-		req, err := http.NewRequest(test.Method, test.Path, nil)
-		if err != nil {
-			t.Errorf("NewRequest: %s", err)
-		}
-		w := httptest.NewRecorder()
-		r.ServeHTTP(w, req)
-		if match != test.Match {
-			t.Errorf("expected match %v but was %v: %s %s", test.Match, match, test.Method, test.Path)
-		}
-		if len(test.Params) > 0 {
-			for expK, expV := range test.Params {
-				// check using helper
-				actualValStr := Param(ctx, expK)
-				if actualValStr != expV {
-					t.Errorf("Param: context value %s expected \"%s\" but was \"%s\"", expK, expV, actualValStr)
+	for i, test := range tests {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			r := NewRouter()
+			match := false
+			var ctx context.Context
+			r.Handle(test.RouteMethod, test.RoutePattern, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				match = true
+				ctx = r.Context()
+			}))
+			req, err := http.NewRequest(test.Method, test.Path, nil)
+			if err != nil {
+				t.Errorf("NewRequest: %s", err)
+			}
+			w := httptest.NewRecorder()
+			r.ServeHTTP(w, req)
+			if match != test.Match {
+				t.Errorf("expected match %v but was %v: %s %s", test.Match, match, test.Method, test.Path)
+			}
+			if len(test.Params) > 0 {
+				for expK, expV := range test.Params {
+					// check using helper
+					actualValStr := Param(ctx, expK)
+					if actualValStr != expV {
+						t.Errorf("Param: context value %s expected \"%s\" but was \"%s\"", expK, expV, actualValStr)
+					}
 				}
 			}
-		}
+		})
 	}
 }
 
@@ -215,5 +221,4 @@ func TestMultipleRoutesDifferentMethods(t *testing.T) {
 	if match != "POST /route" {
 		t.Errorf("unexpected: %s", match)
 	}
-
 }
